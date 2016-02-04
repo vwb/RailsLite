@@ -19,21 +19,31 @@ class StatusesController < ControllerBase
     statuses = $statuses.select do |s|
       s[:cat_id] == Integer(params['cat_id'])
     end
+    flash[:errors] = "THIS IS AN ANGRY ERROR. WILL I APPEAR"
 
     render_content(statuses.to_json, "application/json")
   end
+
+  def go
+    flash[:errors] = "An error will appear"
+    render :flash_test
+  end
 end
 
-class Cats2Controller < ControllerBase
+class CatsController < ControllerBase
   def index
-    render_content($cats.to_json, "application/json")
+    # render_content($cats.to_json, "application/json")
+  end
+
+  def go
+    render :flash_test
   end
 end
 
 router = Router.new
 router.draw do
-  get Regexp.new("^/cats$"), Cats2Controller, :index
-  get Regexp.new("^/cats/(?<cat_id>\\d+)/statuses$"), StatusesController, :index
+  get Regexp.new("^/cats$"), CatsController, :go
+  get Regexp.new("^/cats/(?<cat_id>\\d+)/statuses$"), StatusesController, :go
 end
 
 app = Proc.new do |env|
