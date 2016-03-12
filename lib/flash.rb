@@ -3,12 +3,10 @@ require 'byebug'
 class Flash
 
   def initialize(req)
-    #retrive its contents from a cookie. 
     cookie = req.cookies['_flash']
     @flash_to_store = {}
     @retrieved_flash = {}
     JSON.parse(cookie).each {|key, val| @retrieved_flash[key.to_sym] = val}
-    # debugger
   end
 
   def [](key)

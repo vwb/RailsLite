@@ -8,23 +8,15 @@ class Route
     @action_name = action_name
   end
 
-  # checks if pattern matches path and method matches request method
   def matches?(req)
     (pattern =~ req.path) && (req.request_method.downcase == http_method.to_s)
   end
 
-
-    #what is this? If I already have the pattern defined in myself, 
-    #wont the params be parsed later down the road?
-
-  # use pattern to pull out route params (save for later?)
-  # instantiate controller and call controller action
   def run(req, res)
 
     route_params = pattern.match(req.path)
     route_hash = {}
 
-    #there are no names here!
     route_params.names.each do |name|
       route_hash[name] = route_params[name]
     end
