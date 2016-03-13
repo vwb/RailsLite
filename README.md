@@ -24,7 +24,29 @@ If you navigate to `localhost:3000/public/bla.jpg` you can see a sample image in
 
 The framework includes an implementation of a router that implements similar functionality to the rails router itself.
 
+In server.rb we can see how a router may be instantiated:
 
+	router = Router.new
+	router.draw do
+		get Regexp.new("^/$"), MyController, :go
+	end
+
+While this is a relatively simple call, there is alot going on behind the scenes. With the call to to `Router.new` we instantiate a series of methods for each http action using define_method to keep our code dry: 
+
+	[:get, :post, :put, :delete].each do |http_method|
+		define_method(http_method) do |pattern, controller_class, action_name|
+	 	 add_route(pattern, http_method, controller_class, action_name)
+		end
+	end
+
+Now in the instantiation of the Rack::app within `server.rb` receives the request, instantiates a response and then calls `router.run(req, res)`. This is where the actual matching will occur.
+
+First it will check the if the route has been seen before by the router, and if so will grab the controller tied to the route and invoke the appropriate action: 
+
+	  controller = controller_class.new(req, res, route_hash)
+    controller.invoke_action(action_name)
+
+For further implementation details please refer to `router.rb`
 
 #### Render Templates
 
