@@ -39,22 +39,54 @@ While this is a relatively simple call, there is alot going on behind the scenes
 		end
 	end
 
-Now in the instantiation of the Rack::app within `server.rb` receives the request, instantiates a response and then calls `router.run(req, res)`. This is where the actual matching will occur.
+This allows us to have appropriately matching routes when we may receive a new request.
+
+Now in the instantiation of the app within `server.rb`, we call `router.run(req, res)`. This is where the actual matching will occur.
 
 First it will check the if the route has been seen before by the router, and if so will grab the controller tied to the route and invoke the appropriate action: 
 
-	  controller = controller_class.new(req, res, route_hash)
-    controller.invoke_action(action_name)
+	controller = controller_class.new(req, res, route_hash)
+	controller.invoke_action(action_name)
 
 For further implementation details please refer to `router.rb`
 
 #### Render Templates
 
+To successfully render templates it is necessary to write our own `ControllerBase#render` function.
+
+This needs to implement the following basic behaviors:
+
+* Read the correct html.erb template based on classname and file name
+* Render it using erb
+* Write the content into the reponse (if it hasn't been done already)
+
+The first is completed in this manner:
+
+	file = File.read("views/#{self.class.name.underscore}/#{template_name}.html.erb")
+
+Then we render using ERB:
+
+	erb_template = ERB.new(file)
+	erb_result = erb_template.result(binding)
+
+And finally write the content into the response:
+
+	if already_built_response?
+		raise "Double render!"
+	end
+	@already_built_response = true
+	res.write(content)
+
+For further implementation details on template rendering please refer to `controller_base.rb`
+
 #### Flash
 
-#### Sessions
 
 #### Server Exceptions
 
+
 #### Serve Static Assets
+
+
+
 
