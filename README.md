@@ -157,6 +157,47 @@ For further implementation details please refer to `server.rb` and `show_excepti
 
 #### Serve Static Assets
 
+This is another handrolled middleware that will allow us to serve images and other non-text assets via our MVC. 
 
+The basics that we need to have for this to work correctly is:
 
+* Reference to a root to look for files (public in this case)
+* Check if file exists, otherwise serve 404 'Not Found' status
+* Ability to determine file type and serve appropriate content header
+
+The first we do upon instantiation of the class and then set up a helper class to perform the actual work:
+
+	def initialize(app)
+	  @app = app
+	  @root = :public
+	  @file_server = FileServer.new(root)
+	end
+
+Then within our FileServer class we check if the file exists:
+
+	if File.exist?(file_name)
+	  serve_file(file_name, res)
+	else
+	  res.status = 404
+	  res.write("File not found")
+	end
+
+Finally within serve file we will determine extension type based upon a dictionary of MIME_TYPES:
+
+	MIME_TYPES = {
+	  '.txt' => 'text/plain',
+	  '.jpg' => 'image/jpeg',
+	  '.zip' => 'application/zip'
+	}
+
+	extension = File.extname(file_name)
+	content_type = MIME_TYPES[extension]
+	
+and then write the content into the response with the appropriate header:
+
+	file = File.read(file_name)
+	res["Content-type"] = content_type
+	res.write(file)
+
+For further implemenation details please refer to `server.rb` and `show_exceptions.rb`
 
