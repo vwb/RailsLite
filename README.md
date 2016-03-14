@@ -81,9 +81,79 @@ For further implementation details on template rendering please refer to `contro
 
 #### Flash
 
+The flash core behavior should be a cookie that is available upon the next redirect and then expire. With the caveat that flash.now should be available immediately as well. 
+
+In order to implement this we can use the browsers natural behavior to clear state to our advantage. 
+
+Upon instantiation use two variables, one the flash to store and the other what is parsed from the incoming `_flash` cookie (if it exists):
+
+	@flash_to_store = {}
+	JSON.parse(cookie).each {|key, val| @retrieved_flash[key.to_sym] = val}
+
+Then two helper methods are needed for assigning and getting from the flash:
+
+	def [](key)
+	  @retrieved_flash[key]
+	end
+
+and
+
+	def []=(key, val)
+	  @flash_to_store[key] = val
+	end
+
+When using the getter we want to grab the value that was passed in via the cookie so we retrieve it from `@retrieved_flash`. But for assignment we want to set `@flash_to_store`.
+
+To implement `Flash#now` all that we need to do is return `@flash_to_store`:
+
+	def now
+	  @flash_to_store
+	end
+
+This is because state will not be cleared on a new render, but will be cleared when a redirect occurs thanks to the browser.
+
+So upon redirect we simply need to call store_flash that will set a new cookie in the response that will be accessible the next time flash is instantiated:
+
+	def store_flash(res)
+	  cook = @flash_to_store.to_json
+	  res.set_cookie('_flash', {path: '/', value: cook})
+	end
+
+For further implementation details please refer to `flash.rb` and `controller_base.rb`
 
 #### Server Exceptions
 
+Server exceptions is a hand rolled middleware that will grab any server error that may occur and display far more informative information.
+
+What this will do is perform the standard call to the app, but in a rescue block so that if an exception is propogated up it can grab it and display more valuable information.
+
+	def call(env)
+	  app.call(env)
+	rescue Exception => e
+	    res = Rack::Response.new
+	    file = create_file(e)
+	    res.write(file)
+	    res['Content Type'] = 'text/html'
+	    res.finish
+	end
+
+Within the call to create_file multiple steps occur to provide the user with a stacktrace, the error message, and a snipped from the offending file where the error occurred.
+
+We can grab the stacktrace using:
+
+	<% exc.backtrace.each do |line|%>
+	  <p> <%= line %> </p>
+	<% end %>
+
+The error message via `exc.message`
+
+And finaly the source code via reading the path from the exception and reading the file it provides:
+
+	source_code_error_info = exc.backtrace[0].split(":")
+	path = source_code_error_info.first
+	source_file = File.readlines(path)
+
+For further implementation details please refer to `server.rb` and `show_exceptions.rb`
 
 #### Serve Static Assets
 

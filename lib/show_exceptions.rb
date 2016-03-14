@@ -20,12 +20,12 @@ class ShowExceptions
   def create_file(exc)
 
     source_code_error_info = exc.backtrace[0].split(":")
-
     path = source_code_error_info.first
-    line = source_code_error_info[1].to_i
 
+    #throw into a try catch loop!
     source_file = File.readlines(path)
 
+    line = source_code_error_info[1].to_i
     start = (line - 5 < 0) ? 0 : (line - 5)
     final = (line + 5 >= source_file.length) ? (source_file.length-1) : (line + 5)
 
